@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.0"
   },
   "dependencies": {
     "jsx-ast-utils": "^3.3.5"
