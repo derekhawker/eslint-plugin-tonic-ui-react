@@ -2,7 +2,7 @@
 "use strict";
 
 // Import the ESLint plugin locally
-const eslintPluginExample = require("./eslint-plugin-tonic-ui-react");
+const tonicUiReact = require("./eslint-plugin-tonic-ui-react");
 const react = require("eslint-plugin-react");
 const globals = require("globals");
 
@@ -10,7 +10,7 @@ module.exports = [
     {
         files: ["**/*.js"],
         // Using the eslint-plugin-example plugin defined locally
-        plugins: { "example": eslintPluginExample, react },
+        plugins: { tonicUiReact, react },
         languageOptions: {
             sourceType: "commonjs",
             ecmaVersion: "latest",
@@ -24,7 +24,7 @@ module.exports = [
             },
         },
         rules: {
-            "example/enforce-foo-bar": "error",
+            "tonicUiReact/enforce-tonic-ui-react-shorthands": "error",
         },
     },
 ];
