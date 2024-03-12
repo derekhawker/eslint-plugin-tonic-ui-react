@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node enforce-foo-bar.test.js"
+    "test": "node enforce-tonic-ui-react-shorthands.test.js"
   },
   "keywords": [],
   "author": "",
