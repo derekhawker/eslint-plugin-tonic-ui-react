@@ -11,8 +11,10 @@ const {
     fontSizeProperties,
     fontSizeValues,
     zIndexValues,
+    breakpoints,
 } = require("./alias-maps");
 const getLiteralPropValue = require("jsx-ast-utils/getLiteralPropValue");
+const elementType = require("jsx-ast-utils/elementType");
 
 const optionDefaults = {};
 
@@ -23,7 +25,6 @@ module.exports = {
         }, fixable: "code", schema: [],
     }, create(context) {
         const configuration = Object.assign({}, optionDefaults, context.options[0]);
-
         return {
             JSXElement(node) {
                 // Checking against only tonic components is too restrictive.
@@ -31,36 +32,96 @@ module.exports = {
                 //     return;
                 // }
                 const componentName = node.openingElement.name.name;
+                // Only match on non-intrinsic components
                 if (componentName[0] === componentName[0].toUpperCase()) {
-                    for (const it of node.openingElement.attributes) {
-                        if (spacingProps.has(it.name.name)) {
-                            const propValue = getLiteralPropValue(it);
-                            checkNumericOrPxOrRemValue(node, it, spacingValues, propValue);
+
+                    for (const attr of node.openingElement.attributes) {
+                        if (attr.type === "JSXAttribute") {
+                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression" && attr.name.name !== "style") {
+                                for (const prop of attr.value.expression.properties) {
+                                    handleObjectProperty(node, prop);
+                                }
+                            }
+                            else {
+                                handleJSXAttribute(node, attr);
+                            }
                         }
-                        if (it.name.name === "lineHeight") {
-                            const propValue = getLiteralPropValue(it);
-                            checkNumericOrPxOrRemValue(node, it, lineHeightValues, propValue);
+                        else if (attr.type === "JSXSpreadAttribute") {
+                            if (attr.argument.type === "ObjectExpression") {
+                                for (const prop of attr.argument.properties) {
+                                    handleObjectProperty(node, prop);
+                                }
+                            }
                         }
-                        if (it.name.name === "fontWeight") {
-                            const propValue = getLiteralPropValue(it);
-                            checkForNumberOrStringNumberValue(node, it, fontWeightValues, propValue);
-                        }
-                        if (colorProps.has(it.name.name)) {
-                            const propValue = getLiteralPropValue(it);
-                            checkForAlias(node, it, colorAliases, propValue);
-                        }
-                        if (fontSizeProperties.has(it.name.name)) {
-                            const propValue = getLiteralPropValue(it);
-                            checkNumericOrPxOrRemValue(node, it, fontSizeValues, propValue);
-                        }
-                        if (it.name.name === "zIndex") {
-                            const propValue = getLiteralPropValue(it);
-                            checkForNumberOrStringNumberValue(node, it, zIndexValues, propValue);
+                        else if (attr.type === "ObjectExpression") {
+                            for (const prop of attr.argument.properties) {
+                                handleObjectProperty(node, prop);
+                            }
                         }
                     }
                 }
             },
         };
+
+        function handleObjectProperty(node, prop) {
+            let propName = prop.key.name;
+
+            if (breakpoints.has(propName)) {
+                propName = prop.parent.parent.parent.name.name;
+            }
+
+            if (spacingProps.has(propName)) {
+                const propValue = getObjectValue(prop);
+                checkNumericOrPxOrRemValue(node, prop, spacingValues, propValue);
+            }
+            if (propName === "lineHeight") {
+                const propValue = getObjectValue(prop);
+                checkNumericOrPxOrRemValue(node, prop, lineHeightValues, propValue);
+            }
+            if (propName === "fontWeight") {
+                const propValue = getObjectValue(prop);
+                checkForNumberOrStringNumberValue(node, prop, fontWeightValues, propValue);
+            }
+            if (colorProps.has(propName)) {
+                const propValue = getObjectValue(prop);
+                checkForAlias(node, prop, colorAliases, propValue);
+            }
+            if (fontSizeProperties.has(propName)) {
+                const propValue = getObjectValue(prop);
+                checkNumericOrPxOrRemValue(node, prop, fontSizeValues, propValue);
+            }
+            if (propName === "zIndex") {
+                const propValue = getObjectValue(prop);
+                checkForNumberOrStringNumberValue(node, prop, zIndexValues, propValue);
+            }
+        }
+
+        function handleJSXAttribute(node, attr) {
+            if (spacingProps.has(attr.name.name)) {
+                const propValue = getLiteralPropValue(attr);
+                checkNumericOrPxOrRemValue(node, attr, spacingValues, propValue);
+            }
+            if (attr.name.name === "lineHeight") {
+                const propValue = getLiteralPropValue(attr);
+                checkNumericOrPxOrRemValue(node, attr, lineHeightValues, propValue);
+            }
+            if (attr.name.name === "fontWeight") {
+                const propValue = getLiteralPropValue(attr);
+                checkForNumberOrStringNumberValue(node, attr, fontWeightValues, propValue);
+            }
+            if (colorProps.has(attr.name.name)) {
+                const propValue = getLiteralPropValue(attr);
+                checkForAlias(node, attr, colorAliases, propValue);
+            }
+            if (fontSizeProperties.has(attr.name.name)) {
+                const propValue = getLiteralPropValue(attr);
+                checkNumericOrPxOrRemValue(node, attr, fontSizeValues, propValue);
+            }
+            if (attr.name.name === "zIndex") {
+                const propValue = getLiteralPropValue(attr);
+                checkForNumberOrStringNumberValue(node, attr, zIndexValues, propValue);
+            }
+        }
 
         function checkForAlias(node, attribute, values2Alias, value) {
             if (values2Alias.has(value)) {
@@ -100,4 +161,6 @@ module.exports = {
     },
 };
 
-
+function getObjectValue(property) {
+    return property.value.value;
+}

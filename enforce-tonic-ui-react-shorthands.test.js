@@ -1,6 +1,5 @@
-// enforce-foo-bar.test.js
 const { RuleTester } = require("eslint");
-const fooBarRule = require("./enforce-tonic-ui-react-shorthands");
+const tonicUIReactShorthandsRule = require("./enforce-tonic-ui-react-shorthands");
 
 const parserOptions = {
     ecmaVersion: 2018, sourceType: "module", ecmaFeatures: {
@@ -11,12 +10,12 @@ const parserOptions = {
 const ruleTester = new RuleTester({ parserOptions });
 
 // Throws error if the tests in ruleTester.run() do not pass
-ruleTester.run("enforce-foo-bar", // rule name
-    fooBarRule, // rule code
+ruleTester.run("enforce-tonic-ui-react-shorthands", // rule name
+    tonicUIReactShorthandsRule, // rule code
     { // checks
         // 'valid' checks cases that should pass
         valid: ([{
-            code: "<Box padding=\"4x\" p=\"0 4px\" color=\"red\" borderColor=\"#011\" background=\"white:emphasis\" fontSize=\"xl\" />",
+            code: "<Box padding=\"4x\" p=\"0 4px\" color=\"red\" borderColor=\"#011\" background=\"white:emphasis\" fontSize=\"xl\" style={{padding:\"4px\"}} {...props} />",
         }, {
             code: "<div padding=\"24px\" p=\"4px\" borderColor=\"#005242\" fontSize=\"28px\" fontSize={28} />",
         }]), // 'invalid' checks cases that should not pass
@@ -25,9 +24,9 @@ ruleTester.run("enforce-foo-bar", // rule name
             output: "<Box padding=\"1x\" p=\"64x\" p=\"3x\" />",
             errors: 3,
         }, {
-            code: "<Box lineHeight=\"22px\" lineHeight=\"1.25rem\" lineHeight={22} />",
-            output: "<Box lineHeight=\"md\" lineHeight=\"sm\" lineHeight=\"md\" />",
-            errors: 3,
+            code: "<Box lineHeight=\"22px\" lineHeight=\"1.25rem\" lineHeight={22} {...{ lineHeight: 22 }} />",
+            output: "<Box lineHeight=\"md\" lineHeight=\"sm\" lineHeight=\"md\" {...{ lineHeight: \"md\" }} />",
+            errors: 4,
         }, {
             code: "<Text fontWeight=\"200\" fontWeight={100}/>",
             output: "<Text fontWeight=\"extralight\" fontWeight=\"thin\"/>",
@@ -37,12 +36,17 @@ ruleTester.run("enforce-foo-bar", // rule name
             output: "<Text borderColor=\"white:emphasis\" background=\"teal:90\" backgroundColor=\"purple:10\"/>",
             errors: 3,
         }, {
-            code: "<Flex fontSize=\"28px\" font=\"1.25rem\" fontSize={28} />",
-            output: "<Flex fontSize=\"3xl\" font=\"xl\" fontSize=\"3xl\" />",
-            errors: 3,
+            code: "<Flex fontSize=\"28px\" font=\"1.25rem\" fontSize={28} font={{sm:\"28px\"}} />",
+            output: "<Flex fontSize=\"3xl\" font=\"xl\" fontSize=\"3xl\" font={{sm:\"3xl\"}} />",
+            errors: 4,
         }, {
             code: "<Stack zIndex=\"1700\" zIndex={1000}  />",
             output: "<Stack zIndex=\"toast\" zIndex=\"dropdown\"  />",
+            errors: 2,
+        }, {
+            // pseudo props
+            code: "<Box _hover={{lineHeight:\"22px\"}} {...{\"_hover\":{lineHeight:\"22px\"}}}/>",
+            output: "<Box _hover={{lineHeight:\"md\"}} _hover={{lineHeight:\"md\"}} />",
             errors: 2,
         }]),
     });

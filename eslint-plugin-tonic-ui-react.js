@@ -1,5 +1,5 @@
-// eslint-plugin-tonic-ui-react.js
+// eslint-plugin-example.js
 
 const tonicUiReactShorthandsRule = require("./enforce-tonic-ui-react-shorthands");
-const plugin = { rules: { "enforce-tonic-ui-react-shorthands": tonicUiReactShorthandsRule } };
+const plugin = { rules: { "enforce-shorthands": tonicUiReactShorthandsRule } };
 module.exports = plugin;

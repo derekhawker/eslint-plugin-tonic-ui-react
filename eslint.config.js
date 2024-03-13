@@ -8,9 +8,9 @@ const globals = require("globals");
 
 module.exports = [
     {
-        files: ["**/*.js"],
+        files: ["**/*.js","**/*.jsx"],
         // Using the eslint-plugin-example plugin defined locally
-        plugins: { tonicUiReact, react },
+        plugins: { "tonic-ui-react": tonicUiReact, react },
         languageOptions: {
             sourceType: "commonjs",
             ecmaVersion: "latest",
@@ -24,7 +24,7 @@ module.exports = [
             },
         },
         rules: {
-            "tonicUiReact/enforce-tonic-ui-react-shorthands": "error",
+            "tonic-ui-react/enforce-shorthands": "error",
         },
     },
 ];
