@@ -64,7 +64,13 @@ module.exports = {
         };
 
         function handleObjectProperty(node, prop) {
-            let propName = prop.key.name;
+            if (prop.value.type === "ObjectExpression") {
+                for (const _prop of prop.value.properties) {
+                    handleObjectProperty(node, _prop);
+                }
+            }
+
+            let propName = prop.key.name || prop.key.value;
 
             if (breakpoints.has(propName)) {
                 propName = prop.parent.parent.parent.name.name;

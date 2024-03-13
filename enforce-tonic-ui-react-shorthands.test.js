@@ -36,17 +36,22 @@ ruleTester.run("enforce-tonic-ui-react-shorthands", // rule name
             output: "<Text borderColor=\"white:emphasis\" background=\"teal:90\" backgroundColor=\"purple:10\"/>",
             errors: 3,
         }, {
-            code: "<Flex fontSize=\"28px\" font=\"1.25rem\" fontSize={28} font={{sm:\"28px\"}} />",
-            output: "<Flex fontSize=\"3xl\" font=\"xl\" fontSize=\"3xl\" font={{sm:\"3xl\"}} />",
-            errors: 4,
+            code: "<Flex fontSize=\"28px\" font=\"1.25rem\" fontSize={28} />",
+            output: "<Flex fontSize=\"3xl\" font=\"xl\" fontSize=\"3xl\" />",
+            errors: 3,
         }, {
             code: "<Stack zIndex=\"1700\" zIndex={1000}  />",
             output: "<Stack zIndex=\"toast\" zIndex=\"dropdown\"  />",
             errors: 2,
         }, {
+            // responsive props
+            code: "<Box font={{sm:\"28px\"}} {...{font:{sm:\"1.25rem\"}}} />",
+            output: "<Box font={{sm:\"3xl\"}} {...{font:{sm:\"xl\"}}} />",
+            errors: 1,
+        }, {
             // pseudo props
-            code: "<Box _hover={{lineHeight:\"22px\"}} {...{\"_hover\":{lineHeight:\"22px\"}}}/>",
-            output: "<Box _hover={{lineHeight:\"md\"}} _hover={{lineHeight:\"md\"}} />",
+            code: "<Box _hover={{lineHeight:\"22px\"}} {...{\"_hover\":{lineHeight:\"1.25rem\"}}} />",
+            output: "<Box _hover={{lineHeight:\"md\"}} {...{\"_hover\":{lineHeight:\"sm\"}}} />",
             errors: 2,
         }]),
     });
