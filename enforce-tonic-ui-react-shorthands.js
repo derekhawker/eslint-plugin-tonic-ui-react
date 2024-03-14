@@ -12,6 +12,7 @@ const {
     fontSizeValues,
     zIndexValues,
     breakpoints,
+    radiiValues,
 } = require("./alias-maps");
 const getLiteralPropValue = require("jsx-ast-utils/getLiteralPropValue");
 const elementType = require("jsx-ast-utils/elementType");
@@ -37,7 +38,9 @@ module.exports = {
 
                     for (const attr of node.openingElement.attributes) {
                         if (attr.type === "JSXAttribute") {
-                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression" && attr.name.name !== "style") {
+                            if (attr.name.name === "style") continue;
+
+                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
                                 for (const prop of attr.value.expression.properties) {
                                     handleObjectProperty(node, prop);
                                 }
@@ -53,29 +56,12 @@ module.exports = {
                                 }
                             }
                         }
-                        else if (attr.type === "ObjectExpression") {
-                            for (const prop of attr.argument.properties) {
-                                handleObjectProperty(node, prop);
-                            }
-                        }
                     }
                 }
             },
         };
 
-        function handleObjectProperty(node, prop) {
-            if (prop.value.type === "ObjectExpression") {
-                for (const _prop of prop.value.properties) {
-                    handleObjectProperty(node, _prop);
-                }
-            }
-
-            let propName = prop.key.name || prop.key.value;
-
-            if (breakpoints.has(propName)) {
-                propName = prop.parent.parent.parent.name.name;
-            }
-
+        function checkAliasProps(node, prop, propName) {
             if (spacingProps.has(propName)) {
                 const propValue = getObjectValue(prop);
                 checkNumericOrPxOrRemValue(node, prop, spacingValues, propValue);
@@ -100,33 +86,36 @@ module.exports = {
                 const propValue = getObjectValue(prop);
                 checkForNumberOrStringNumberValue(node, prop, zIndexValues, propValue);
             }
+            if (propName === "borderRadius") {
+                const propValue = getObjectValue(prop);
+                checkNumericOrPxOrRemValue(node, prop, radiiValues, propValue);
+            }
+        }
+
+        function handleObjectProperty(node, prop) {
+            if (prop.value.type === "ObjectExpression") {
+                for (const _prop of prop.value.properties) {
+                    handleObjectProperty(node, _prop);
+                }
+            }
+
+            let propName = prop.key.name || prop.key.value;
+
+            if (breakpoints.has(propName)) {
+                // TODO: need a more sane way of grabbing the parent prop. Maybe recurse up parent, but check the type
+                if (prop.parent.parent.type === "Property") {
+                    propName = prop.parent.parent.key.name;
+                }
+                else {
+                    propName = prop.parent.parent.parent.name.name;
+                }
+            }
+            checkAliasProps(node, prop, propName);
         }
 
         function handleJSXAttribute(node, attr) {
-            if (spacingProps.has(attr.name.name)) {
-                const propValue = getLiteralPropValue(attr);
-                checkNumericOrPxOrRemValue(node, attr, spacingValues, propValue);
-            }
-            if (attr.name.name === "lineHeight") {
-                const propValue = getLiteralPropValue(attr);
-                checkNumericOrPxOrRemValue(node, attr, lineHeightValues, propValue);
-            }
-            if (attr.name.name === "fontWeight") {
-                const propValue = getLiteralPropValue(attr);
-                checkForNumberOrStringNumberValue(node, attr, fontWeightValues, propValue);
-            }
-            if (colorProps.has(attr.name.name)) {
-                const propValue = getLiteralPropValue(attr);
-                checkForAlias(node, attr, colorAliases, propValue);
-            }
-            if (fontSizeProperties.has(attr.name.name)) {
-                const propValue = getLiteralPropValue(attr);
-                checkNumericOrPxOrRemValue(node, attr, fontSizeValues, propValue);
-            }
-            if (attr.name.name === "zIndex") {
-                const propValue = getLiteralPropValue(attr);
-                checkForNumberOrStringNumberValue(node, attr, zIndexValues, propValue);
-            }
+            let propName = attr.name.name;
+            checkAliasProps(node, attr, propName);
         }
 
         function checkForAlias(node, attribute, values2Alias, value) {
@@ -168,5 +157,10 @@ module.exports = {
 };
 
 function getObjectValue(property) {
-    return property.value.value;
+    if (property.value.type === "JSXExpressionContainer") {
+        return property.value.expression.value;
+    }
+    else {
+        return property.value.value;
+    }
 }

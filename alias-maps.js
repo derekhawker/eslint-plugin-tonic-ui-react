@@ -20,7 +20,11 @@ const fontSizeValues = new Map([[12, "xs"], [14, "sm"], [16, "md"], [18, "lg"], 
 
 const zIndexValues = new Map([[-1, "hide"], ["auto", "auto"], [0, "base"], [1000, "dropdown"], [1100, "sticky"], [1200, "fixed"], [1300, "overlay"], [1400, "drawer"], [1500, "modal"], [1600, "popover"], [1700, "toast"], [1800, "tooltip"]]);
 
-const breakpoints = new Set(["sm","md","lg","xl", "2xl"])
+const breakpoints = new Set(["sm", "md", "lg", "xl", "2xl"]);
+
+const radiiValues = new Map([[3, "sm"], [6, "md"], [12, "lg"],
+
+]);
 
 module.exports = {
     lineHeightValues,
@@ -34,4 +38,5 @@ module.exports = {
     fontSizeValues,
     zIndexValues,
     breakpoints,
+    radiiValues,
 };
