@@ -6,7 +6,11 @@
   "scripts": {
     "test": "node enforce-tonic-ui-react-shorthands.test.js"
   },
-  "keywords": [],
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
@@ -15,5 +19,8 @@
   },
   "dependencies": {
     "jsx-ast-utils": "^3.3.5"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
   }
 }
