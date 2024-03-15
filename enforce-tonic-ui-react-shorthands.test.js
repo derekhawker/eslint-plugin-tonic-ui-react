@@ -15,7 +15,7 @@ ruleTester.run("enforce-shorthands", // rule name
     { // checks
         // 'valid' checks cases that should pass
         valid: ([{
-            code: "<Box padding=\"4x\" p=\"0 4px\" color=\"red\" borderColor=\"#011\" background=\"white:emphasis\" fontSize=\"xl\" style={{padding:\"4px\"}} {...props} />",
+            code: "<Box disabled  padding=\"4x\" p=\"0 4px\" color=\"red\" borderColor=\"#011\" background=\"white:emphasis\" fontSize=\"xl\" style={{padding:\"4px\"}} {...props} />",
         }, {
             code: "<div padding=\"24px\" p=\"4px\" borderColor=\"#005242\" fontSize=\"28px\" fontSize={28} />",
         }, {

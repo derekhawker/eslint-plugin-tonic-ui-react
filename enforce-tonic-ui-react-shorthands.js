@@ -21,7 +21,7 @@ const optionDefaults = {};
 
 module.exports = {
     meta: {
-        type: "problem", docs: {
+        type: "suggestion", docs: {
             description: "Enforce tonic-ui shorthands are used over raw px/rem/color codes.",
         }, fixable: "code", schema: [],
     }, create(context) {
@@ -34,18 +34,16 @@ module.exports = {
                 // }
                 const componentName = node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : node.openingElement.name.type === "JSXMemberExpression" ? node.openingElement.name.object.name : "";
 
-                // Only match on non-intrinsic components
-                if (!componentName) {
-                    console.log(node.loc, node);
-                }
-
                 if (componentName[0] === componentName[0].toUpperCase()) {
 
-                    for (let i = 0; i < node.openingElement.attributes.length-1; i++) {
-                         const attr =  node.openingElement.attributes[i];
-                         // simple boolean props are null (
-if (!attr.value) continue;
-                                          if (attr.type === "JSXAttribute") {
+                    for (let i = 0; i < node.openingElement.attributes.length - 1; i++) {
+                        const attr = node.openingElement.attributes[i];
+                        // simple boolean props are null (
+                        if (!attr.value) {
+                            console.log(attr);
+                            continue;
+                        }
+                        if (attr.type === "JSXAttribute") {
                             if (attr.name.name === "style") continue;
 
                             try {
@@ -59,7 +57,7 @@ if (!attr.value) continue;
                                 }
                             }
                             catch (e) {
-                                console.log(i, node.loc, attr.type,node);
+                                console.log(i, node.loc, attr.type, node);
                                 throw e;
                             }
                         }
@@ -78,31 +76,43 @@ if (!attr.value) continue;
         function checkAliasProps(node, prop, propName) {
             if (spacingProps.has(propName)) {
                 const propValue = getObjectValue(prop);
-                checkNumericOrPxOrRemValue(node, prop, spacingValues, propValue);
+                checkNumericOrPxOrRemValue(node, prop, {
+                    message: "Spacing shorthand", values2Alias: spacingValues,
+                }, propValue);
             }
             if (propName === "lineHeight") {
                 const propValue = getObjectValue(prop);
-                checkNumericOrPxOrRemValue(node, prop, lineHeightValues, propValue);
+                checkNumericOrPxOrRemValue(node, prop, {
+                    message: "Line-height shorthand", values2Alias: lineHeightValues,
+                }, propValue);
             }
             if (propName === "fontWeight") {
                 const propValue = getObjectValue(prop);
-                checkForNumberOrStringNumberValue(node, prop, fontWeightValues, propValue);
+                checkForNumberOrStringNumberValue(node, prop, {
+                    message: "Font-weight shorthand", values2Alias: fontWeightValues,
+                }, propValue);
             }
             if (colorProps.has(propName)) {
                 const propValue = getObjectValue(prop);
-                checkForAlias(node, prop, colorAliases, propValue);
+                checkForAlias(node, prop, { message: "Color shorthand", values2Alias: colorAliases }, propValue);
             }
             if (fontSizeProperties.has(propName)) {
                 const propValue = getObjectValue(prop);
-                checkNumericOrPxOrRemValue(node, prop, fontSizeValues, propValue);
+                checkNumericOrPxOrRemValue(node, prop, {
+                    message: "Font-size shorthand", values2Alias: fontSizeValues,
+                }, propValue);
             }
             if (propName === "zIndex") {
                 const propValue = getObjectValue(prop);
-                checkForNumberOrStringNumberValue(node, prop, zIndexValues, propValue);
+                checkForNumberOrStringNumberValue(node, prop, {
+                    message: "Z-index shorthand", values2Alias: zIndexValues,
+                }, propValue);
             }
             if (propName === "borderRadius") {
                 const propValue = getObjectValue(prop);
-                checkNumericOrPxOrRemValue(node, prop, radiiValues, propValue);
+                checkNumericOrPxOrRemValue(node, prop, {
+                    message: "Border-radius shorthand", values2Alias: radiiValues,
+                }, propValue);
             }
         }
 
@@ -132,40 +142,40 @@ if (!attr.value) continue;
             checkAliasProps(node, attr, propName);
         }
 
-        function checkForAlias(node, attribute, values2Alias, value) {
+        function checkForAlias(node, attribute, { message, values2Alias }, value) {
             if (values2Alias.has(value)) {
                 context.report({
-                    node, message: "Spacing name", data: {}, fix(fixer) {
+                    node, message, loc: attribute.loc, fix(fixer) {
                         return fixer.replaceText(attribute.value, `"${values2Alias.get(value)}"`);
                     },
                 });
             }
         }
 
-        function checkNumericOrPxOrRemValue(node, attribute, values2Alias, value) {
+        function checkNumericOrPxOrRemValue(node, attribute, { message, values2Alias }, value) {
             if (typeof value === "number") {
-                checkForAlias(node, attribute, values2Alias, value);
+                checkForAlias(node, attribute, { message, values2Alias }, value);
             }
             if (typeof value === "string") {
                 if (value.endsWith("px")) {
                     const numValue = Number(value.substring(0, value.length - 2));
-                    checkForAlias(node, attribute, values2Alias, numValue);
+                    checkForAlias(node, attribute, { message, values2Alias }, numValue);
                 }
 
                 if (value.endsWith("rem")) {
                     const numValue = 16 * Number(value.substring(0, value.length - 3));
-                    checkForAlias(node, attribute, values2Alias, numValue);
+                    checkForAlias(node, attribute, { message, values2Alias }, numValue);
                 }
             }
         }
 
-        function checkForNumberOrStringNumberValue(node, attribute, values2Alias, _value) {
+        function checkForNumberOrStringNumberValue(node, attribute, { message, values2Alias }, _value) {
             let value = _value;
             if (typeof value == "string") {
                 value = Number(value);
                 if (Number.isNaN(value)) return;
             }
-            checkForAlias(node, attribute, values2Alias, value);
+            checkForAlias(node, attribute, { message, values2Alias }, value);
         }
     },
 };
