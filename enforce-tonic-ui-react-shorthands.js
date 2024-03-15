@@ -102,6 +102,22 @@ module.exports = {
                     message: "Z-index shorthand", values2Alias: zIndexValues,
                 }, propValue);
             }
+
+            if (propName === "border") {
+                const propValue = getObjectValue(prop);
+                const split = propValue.split(" ");
+                if (split.length === 3) {
+                    const color = colorAliases.get(split[2].toLowerCase());
+                    if (color) {
+                        context.report({
+                            node, message: "Border-color has shorthand", loc: prop.loc, fix(fixer) {
+                                return [fixer.replaceText(prop.value, `"${split[0]} ${split[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                            },
+                        });
+                    }
+                }
+
+            }
             if (propName === "borderRadius") {
                 const propValue = getObjectValue(prop);
                 checkNumericOrPxOrRemValue(node, prop, {

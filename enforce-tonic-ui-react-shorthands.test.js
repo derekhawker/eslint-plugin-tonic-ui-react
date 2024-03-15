@@ -59,6 +59,10 @@ ruleTester.run("enforce-shorthands", // rule name
             code: "<>{true && <Box _hover={{lineHeight:\"22px\"}} {...{_hover:{lineHeight:\"1.25rem\"}}} sx={{_hover:{lineHeight:\"1.25rem\"}}}/>}</>",
             output: "<>{true && <Box _hover={{lineHeight:\"md\"}} {...{_hover:{lineHeight:\"sm\"}}} sx={{_hover:{lineHeight:\"sm\"}}}/>}</>",
             errors: 3,
+        }, {
+            code: "<Box border=\"0 solid #5e5e5e\" border=\"0\" />",
+            output: "<Box border=\"0 solid\" borderColor=\"gray:60\" border=\"0\" />",
+            errors: 1,
         }]),
     });
 
