@@ -36,29 +36,21 @@ module.exports = {
 
                 if (componentName[0] === componentName[0].toUpperCase()) {
 
-                    for (let i = 0; i < node.openingElement.attributes.length - 1; i++) {
-                        const attr = node.openingElement.attributes[i];
+                    for (const attr of node.openingElement.attributes) {
                         // simple boolean props are null (
-                        if (!attr.value) {
-                            console.log(attr);
+                        if (!attr.value && attr.name?.type === "JSXIdentifier") {
                             continue;
                         }
                         if (attr.type === "JSXAttribute") {
                             if (attr.name.name === "style") continue;
 
-                            try {
-                                if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
-                                    for (const prop of attr.value.expression.properties) {
-                                        handleObjectProperty(node, prop);
-                                    }
-                                }
-                                else {
-                                    handleJSXAttribute(node, attr);
+                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
+                                for (const prop of attr.value.expression.properties) {
+                                    handleObjectProperty(node, prop);
                                 }
                             }
-                            catch (e) {
-                                console.log(i, node.loc, attr.type, node);
-                                throw e;
+                            else {
+                                handleJSXAttribute(node, attr);
                             }
                         }
                         else if (attr.type === "JSXSpreadAttribute") {
@@ -94,7 +86,9 @@ module.exports = {
             }
             if (colorProps.has(propName)) {
                 const propValue = getObjectValue(prop);
-                checkForAlias(node, prop, { message: "Color shorthand", values2Alias: colorAliases }, propValue);
+                checkForAlias(node, prop, {
+                    message: "Color shorthand", values2Alias: colorAliases,
+                }, propValue);
             }
             if (fontSizeProperties.has(propName)) {
                 const propValue = getObjectValue(prop);
@@ -169,7 +163,9 @@ module.exports = {
             }
         }
 
-        function checkForNumberOrStringNumberValue(node, attribute, { message, values2Alias }, _value) {
+        function checkForNumberOrStringNumberValue(node, attribute, {
+            message, values2Alias,
+        }, _value) {
             let value = _value;
             if (typeof value == "string") {
                 value = Number(value);
