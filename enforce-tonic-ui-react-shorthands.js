@@ -32,21 +32,35 @@ module.exports = {
                 // if (!tonicComponentNames.has(node.openingElement.name.name)) {
                 //     return;
                 // }
-                const componentName = node.openingElement.name.name;
+                const componentName = node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : node.openingElement.name.type === "JSXMemberExpression" ? node.openingElement.name.object.name : "";
+
                 // Only match on non-intrinsic components
+                if (!componentName) {
+                    console.log(node.loc, node);
+                }
+
                 if (componentName[0] === componentName[0].toUpperCase()) {
 
-                    for (const attr of node.openingElement.attributes) {
-                        if (attr.type === "JSXAttribute") {
+                    for (let i = 0; i < node.openingElement.attributes.length-1; i++) {
+                         const attr =  node.openingElement.attributes[i];
+                         // simple boolean props are null (
+if (!attr.value) continue;
+                                          if (attr.type === "JSXAttribute") {
                             if (attr.name.name === "style") continue;
 
-                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
-                                for (const prop of attr.value.expression.properties) {
-                                    handleObjectProperty(node, prop);
+                            try {
+                                if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
+                                    for (const prop of attr.value.expression.properties) {
+                                        handleObjectProperty(node, prop);
+                                    }
+                                }
+                                else {
+                                    handleJSXAttribute(node, attr);
                                 }
                             }
-                            else {
-                                handleJSXAttribute(node, attr);
+                            catch (e) {
+                                console.log(i, node.loc, attr.type,node);
+                                throw e;
                             }
                         }
                         else if (attr.type === "JSXSpreadAttribute") {
