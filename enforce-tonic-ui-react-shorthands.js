@@ -88,7 +88,7 @@ module.exports = {
                 const propValue = getObjectValue(prop);
                 checkForAlias(node, prop, {
                     message: "Color shorthand", values2Alias: colorAliases,
-                }, propValue);
+                }, typeof propValue === "string" ? propValue.toLowerCase() : propValue);
             }
             if (fontSizeProperties.has(propName)) {
                 const propValue = getObjectValue(prop);

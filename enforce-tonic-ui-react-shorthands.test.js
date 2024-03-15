@@ -34,7 +34,7 @@ ruleTester.run("enforce-shorthands", // rule name
             output: "<Text fontWeight=\"extralight\" fontWeight=\"thin\"/>",
             errors: 2,
         }, {
-            code: "<Text borderColor=\"rgba(255, 255, 255, 1.0)\" background=\"#005242\" backgroundColor=\"#eee1fe\"/>",
+            code: "<Text borderColor=\"rgba(255, 255, 255, 1.0)\" background=\"#005242\" backgroundColor=\"#EeE1fe\"/>",
             output: "<Text borderColor=\"white:emphasis\" background=\"teal:90\" backgroundColor=\"purple:10\"/>",
             errors: 3,
         }, {
