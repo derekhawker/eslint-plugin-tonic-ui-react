@@ -56,8 +56,8 @@ ruleTester.run("enforce-shorthands", // rule name
             errors: 2,
         }, {
             // pseudo props
-            code: "<Box _hover={{lineHeight:\"22px\"}} {...{_hover:{lineHeight:\"1.25rem\"}}} sx={{_hover:{lineHeight:\"1.25rem\"}}}/>",
-            output: "<Box _hover={{lineHeight:\"md\"}} {...{_hover:{lineHeight:\"sm\"}}} sx={{_hover:{lineHeight:\"sm\"}}}/>",
+            code: "<>{true && <Box _hover={{lineHeight:\"22px\"}} {...{_hover:{lineHeight:\"1.25rem\"}}} sx={{_hover:{lineHeight:\"1.25rem\"}}}/>}</>",
+            output: "<>{true && <Box _hover={{lineHeight:\"md\"}} {...{_hover:{lineHeight:\"sm\"}}} sx={{_hover:{lineHeight:\"sm\"}}}/>}</>",
             errors: 3,
         }]),
     });
