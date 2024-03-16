@@ -26,6 +26,7 @@ module.exports = {
         }, fixable: "code", schema: [],
     }, create(context) {
         const configuration = Object.assign({}, optionDefaults, context.options[0]);
+
         return {
             JSXElement(node) {
                 // Checking against only tonic components is too restrictive.
@@ -37,81 +38,115 @@ module.exports = {
                 if (componentName[0] === componentName[0].toUpperCase()) {
 
                     for (const attr of node.openingElement.attributes) {
-                        // simple boolean props are null (
-                        if (!attr.value && attr.name?.type === "JSXIdentifier") {
-                            continue;
-                        }
-                        if (attr.type === "JSXAttribute") {
-                            if (attr.name.name === "style") continue;
-
-                            if (attr.value.type === "JSXExpressionContainer" && attr.value.expression.type === "ObjectExpression") {
-                                for (const prop of attr.value.expression.properties) {
-                                    handleObjectProperty(node, prop);
-                                }
-                            }
-                            else {
-                                handleJSXAttribute(node, attr);
-                            }
-                        }
-                        else if (attr.type === "JSXSpreadAttribute") {
-                            if (attr.argument.type === "ObjectExpression") {
-                                for (const prop of attr.argument.properties) {
-                                    handleObjectProperty(node, prop);
-                                }
-                            }
-                        }
+                        parseAttribute(attr, node);
                     }
                 }
             },
         };
 
+        function parseValue(node, attr, attrValue) {
+            switch (attrValue.type) {
+                case "JSXExpressionContainer": {
+                    const exprContainer = attrValue.expression;
+                    parseValue(node, attr, exprContainer);
+                    break;
+                }
+                case "ObjectExpression":
+                    for (const prop of attrValue.properties) {
+                        handleObjectProperty(node, prop);
+                    }
+                    break;
+                case "Literal": {
+                    let propName = attr.name.name;
+                    checkAliasProps(node, attrValue, propName);
+                    break;
+                }
+            }
+        }
+
+        function parseAttribute(attr, node) {
+            switch (attr.type) {
+                case "JSXAttribute":
+                    // simple boolean props are null (
+                    if (!attr.value && attr.name?.type === "JSXIdentifier") {
+                        return;
+                    }
+
+                    // Shorthands don't work in style. Skip
+                    if (attr.name.name === "style") return;
+
+                    parseValue(node, attr, attr.value);
+                    break;
+
+                case "JSXSpreadAttribute":
+                    const argument = attr.argument;
+                    switch (argument.type) {
+                        case "ObjectExpression":
+                            for (const prop of argument.properties) {
+                                handleObjectProperty(node, prop);
+                            }
+                            break;
+                        case "ConditionalExpression":
+                            switch (argument.consequent.type) {
+
+                            }
+                            switch (argument.alternate.type) {
+
+                            }
+                            break;
+                    }
+                    break;
+            }
+
+        }
+
         function checkAliasProps(node, prop, propName) {
             if (spacingProps.has(propName)) {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Spacing shorthand", values2Alias: spacingValues,
                 }, propValue);
             }
             if (propName === "lineHeight") {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Line-height shorthand", values2Alias: lineHeightValues,
                 }, propValue);
             }
             if (propName === "fontWeight") {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkForNumberOrStringNumberValue(node, prop, {
                     message: "Font-weight shorthand", values2Alias: fontWeightValues,
                 }, propValue);
             }
             if (colorProps.has(propName)) {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkForAlias(node, prop, {
                     message: "Color shorthand", values2Alias: colorAliases,
                 }, typeof propValue === "string" ? propValue.toLowerCase() : propValue);
             }
             if (fontSizeProperties.has(propName)) {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Font-size shorthand", values2Alias: fontSizeValues,
                 }, propValue);
             }
             if (propName === "zIndex") {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkForNumberOrStringNumberValue(node, prop, {
                     message: "Z-index shorthand", values2Alias: zIndexValues,
                 }, propValue);
             }
 
             if (propName === "border") {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 const split = propValue.split(" ");
                 if (split.length === 3) {
                     const color = colorAliases.get(split[2].toLowerCase());
                     if (color) {
                         context.report({
                             node, message: "Border-color has shorthand", loc: prop.loc, fix(fixer) {
-                                return [fixer.replaceText(prop.value, `"${split[0]} ${split[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                                return [fixer.replaceText(prop, `"${split[0]} ${split[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
                             },
                         });
                     }
@@ -119,7 +154,7 @@ module.exports = {
 
             }
             if (propName === "borderRadius") {
-                const propValue = getObjectValue(prop);
+                const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Border-radius shorthand", values2Alias: radiiValues,
                 }, propValue);
@@ -144,19 +179,14 @@ module.exports = {
                     propName = prop.parent.parent.parent.name.name;
                 }
             }
-            checkAliasProps(node, prop, propName);
-        }
-
-        function handleJSXAttribute(node, attr) {
-            let propName = attr.name.name;
-            checkAliasProps(node, attr, propName);
+            checkAliasProps(node, prop.value, propName);
         }
 
         function checkForAlias(node, attribute, { message, values2Alias }, value) {
             if (values2Alias.has(value)) {
                 context.report({
                     node, message, loc: attribute.loc, fix(fixer) {
-                        return fixer.replaceText(attribute.value, `"${values2Alias.get(value)}"`);
+                        return fixer.replaceText(attribute.parent?.type === "JSXExpressionContainer" ? attribute.parent : attribute, `"${values2Alias.get(value)}"`);
                     },
                 });
             }
@@ -192,11 +222,3 @@ module.exports = {
     },
 };
 
-function getObjectValue(property) {
-    if (property.value.type === "JSXExpressionContainer") {
-        return property.value.expression.value;
-    }
-    else {
-        return property.value.value;
-    }
-}
