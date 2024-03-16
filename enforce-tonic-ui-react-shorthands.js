@@ -131,38 +131,65 @@ module.exports = {
             }
 
             if (propName === "border") {
-
+                // TODO: Haven't fixed the alternate branch of conditional
                 const propValue = prop.value;
-                const split = propValue.split(" ");
-                // We can use the color shorthands by splitting border into border (without color) and borderColor
-                if (split.length === 3) {
-                    const color = colorAliases.get(split[2].toLowerCase());
-                    if (color) {
-                        switch (prop.parent.type) {
-                            case "ConditionalExpression":
-                                // Handle case where we found border Inside a conditional. We need to add border color as a duplicate after the conditional
-                                // console.log(prop.parent);
-                                if (prop.parent.parent.type === "JSXExpressionContainer"){
+                if (prop.type === "ConditionalExpression") {
+
+                    const consequentSplit = prop.consequent.value.split(" ");
+                    const alternateSplit = prop.alternate.value.split(" ");
+
+                    // We can use the color shorthands by splitting border into border (without color) and borderColor
+                    if (consequentSplit.length === 3 || alternateSplit.length == 3) {
+                        const consequentColor = consequentSplit.length === 3 ? colorAliases.get(consequentSplit[2].toLowerCase()) : undefined;
+                        const alternateColor = alternateSplit.length === 3 ? colorAliases.get(alternateSplit[2].toLowerCase()) : undefined;
+                        if (consequentColor || alternateColor) {
+                            const consequentStart = consequentSplit.length === 3 ? `"${consequentSplit[0]} ${consequentSplit[1]}"` : prop.consequent.raw;
+                            const alternateStart = alternateSplit.length === 3 ? `"${alternateSplit[0]} ${alternateSplit[1]}"` : prop.alternate.raw;
+                            console.log(prop);
+                            context.report({
+                                node,
+                                message: "Border-color has shorthand",
+                                loc: prop.loc,
+                                fix(fixer) {
+                                    return [fixer.replaceText(prop.consequent, consequentStart),
+                                            fixer.replaceText(prop.alternate, alternateStart),
+                                            fixer.insertTextAfter(prop, `, borderColor:${prop.test.raw??prop.test.name}?"${consequentColor ?? prop.consequent.value}":"${alternateColor ?? prop.alternate.value}"`)];
+                                },
+                            });
+                        }
+                    }
+                }
+                else {
+                    const consquentSplit = propValue.split(" ");
+                    // We can use the color shorthands by splitting border into border (without color) and borderColor
+                    if (consquentSplit.length === 3) {
+                        const color = colorAliases.get(consquentSplit[2].toLowerCase());
+                        if (color) {
+                            switch (prop.parent.type) {
+                                case "ConditionalExpression":
+                                    // Handle case where we found border Inside a conditional. We need to add border color as a duplicate after the conditional
+                                    // console.log(prop.parent);
+                                    if (prop.parent.parent.type === "JSXExpressionContainer") {
+                                        context.report({
+                                            node,
+                                            message: "Border-color has shorthand",
+                                            loc: prop.loc,
+                                            fix(fixer) {
+                                                return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${prop.parent.test.raw??prop.parent.test.name}?"${color}":${prop.parent.alternate.raw}}`)];
+                                            },
+                                        });
+                                    }
+                                    break;
+                                default:
                                     context.report({
                                         node,
                                         message: "Border-color has shorthand",
                                         loc: prop.loc,
                                         fix(fixer) {
-                                            return [fixer.replaceText(prop, `"${split[0]} ${split[1]}"`),
-                                                    fixer.insertTextAfter(prop.parent.parent, ` borderColor={${prop.parent.test.raw}?"${color}":${prop.parent.alternate.raw}}`)];
+                                            return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
                                         },
                                     });
-                                }
-                                break;
-                            default:
-                                context.report({
-                                    node,
-                                    message: "Border-color has shorthand",
-                                    loc: prop.loc,
-                                    fix(fixer) {
-                                        return [fixer.replaceText(prop, `"${split[0]} ${split[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
-                                    },
-                                });
+                            }
                         }
                     }
                 }
