@@ -19,6 +19,15 @@ const elementType = require("jsx-ast-utils/elementType");
 
 const optionDefaults = {};
 
+function conditional2Str(test) {
+    switch (test.type) {
+        case "LogicalExpression":
+            return conditional2Str(test.left) + test.operator + conditional2Str(test.right);
+        default:
+            return test.raw ?? test.name;
+    }
+}
+
 module.exports = {
     meta: {
         type: "suggestion", docs: {
@@ -44,26 +53,28 @@ module.exports = {
             },
         };
 
-        function parseValue(node, attr, attrValue) {
+        function parseValue(node, attr, attrValue, propName) {
             switch (attrValue.type) {
                 case "JSXExpressionContainer": {
                     const exprContainer = attrValue.expression;
-                    parseValue(node, attr, exprContainer);
+                    parseValue(node, attr, exprContainer, propName);
                     break;
                 }
                 case "ObjectExpression":
                     for (const prop of attrValue.properties) {
-                        handleObjectProperty(node, prop);
+                        parseValue(node, attr, prop, propName);
                     }
                     break;
+                case "Property":
+                    parseValue(node, attr, attrValue.value, (breakpoints.has(attrValue.key.name)) ? propName : attrValue.key.name);
+                    break;
                 case "Literal": {
-                    let propName = attr.name.name;
                     checkAliasProps(node, attrValue, propName);
                     break;
                 }
                 case "ConditionalExpression":
-                    parseValue(node, attr, attrValue.consequent);
-                    parseValue(node, attr, attrValue.alternate);
+                    parseValue(node, attr, attrValue.consequent, propName);
+                    parseValue(node, attr, attrValue.alternate, propName);
                     break;
 
             }
@@ -80,12 +91,12 @@ module.exports = {
                     // Shorthands don't work in style. Skip
                     if (attr.name.name === "style") return;
 
-                    parseValue(node, attr, attr.value);
+                    parseValue(node, attr, attr.value, attr.name?.name);
                     break;
 
                 case "JSXSpreadAttribute":
                     const argument = attr.argument;
-                    parseValue(node, attr, argument);
+                    parseValue(node, attr, argument, argument.name?.name);
 
                     break;
             }
@@ -131,6 +142,7 @@ module.exports = {
             }
 
             if (propName === "border") {
+                console.log("border", prop);
                 // TODO: Haven't fixed the alternate branch of conditional
                 const propValue = prop.value;
                 if (prop.type === "ConditionalExpression") {
@@ -151,9 +163,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: prop.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(prop.consequent, consequentStart),
-                                            fixer.replaceText(prop.alternate, alternateStart),
-                                            fixer.insertTextAfter(prop, `, borderColor:${prop.test.raw??prop.test.name}?"${consequentColor ?? prop.consequent.value}":"${alternateColor ?? prop.alternate.value}"`)];
+                                    return [fixer.replaceText(prop.consequent, consequentStart), fixer.replaceText(prop.alternate, alternateStart), fixer.insertTextAfter(prop, `, borderColor:${prop.test.raw ?? prop.test.name}?"${consequentColor ?? prop.consequent.value}":"${alternateColor ?? prop.alternate.value}"`)];
                                 },
                             });
                         }
@@ -175,7 +185,7 @@ module.exports = {
                                             message: "Border-color has shorthand",
                                             loc: prop.loc,
                                             fix(fixer) {
-                                                return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${prop.parent.test.raw??prop.parent.test.name}?"${color}":${prop.parent.alternate.raw}}`)];
+                                                return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${(conditional2Str(prop.parent.test))}?"${color}":${prop.parent.alternate.raw}}`)];
                                             },
                                         });
                                     }
