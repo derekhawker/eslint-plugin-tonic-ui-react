@@ -22,7 +22,7 @@ const optionDefaults = {};
 function conditional2Str(test) {
     switch (test.type) {
         case "LogicalExpression":
-            return conditional2Str(test.left) + test.operator + conditional2Str(test.right);
+            return conditional2Str(test.left) + " " + test.operator + " " + conditional2Str(test.right);
         default:
             return test.raw ?? test.name;
     }
@@ -57,7 +57,12 @@ module.exports = {
             switch (attrValue.type) {
                 case "JSXExpressionContainer": {
                     const exprContainer = attrValue.expression;
-                    parseValue(node, attr, exprContainer, propName);
+                    if (propName === "border" && exprContainer.type === "Conditional") {
+                        if (parseBorderShorthand(node, attr, exprContainer, true)) break;
+                    }
+                    else {
+                        parseValue(node, attr, exprContainer, propName);
+                    }
                     break;
                 }
                 case "ObjectExpression":
@@ -66,7 +71,13 @@ module.exports = {
                     }
                     break;
                 case "Property":
-                    parseValue(node, attr, attrValue.value, (breakpoints.has(attrValue.key.name)) ? propName : attrValue.key.name);
+
+                    const pName = (breakpoints.has(attrValue.key.name)) ? propName : attrValue.key.name;
+                    if (pName === "border") {
+                        if (parseBorderShorthand(node, attr, attrValue.value)) break;
+                    }
+                    parseValue(node, attr, attrValue.value, pName);
+
                     break;
                 case "Literal": {
                     checkAliasProps(node, attrValue, propName);
@@ -76,7 +87,6 @@ module.exports = {
                     parseValue(node, attr, attrValue.consequent, propName);
                     parseValue(node, attr, attrValue.alternate, propName);
                     break;
-
             }
         }
 
@@ -142,69 +152,40 @@ module.exports = {
             }
 
             if (propName === "border") {
-                console.log("border", prop);
-                // TODO: Haven't fixed the alternate branch of conditional
-                const propValue = prop.value;
-                if (prop.type === "ConditionalExpression") {
-
-                    const consequentSplit = prop.consequent.value.split(" ");
-                    const alternateSplit = prop.alternate.value.split(" ");
-
-                    // We can use the color shorthands by splitting border into border (without color) and borderColor
-                    if (consequentSplit.length === 3 || alternateSplit.length == 3) {
-                        const consequentColor = consequentSplit.length === 3 ? colorAliases.get(consequentSplit[2].toLowerCase()) : undefined;
-                        const alternateColor = alternateSplit.length === 3 ? colorAliases.get(alternateSplit[2].toLowerCase()) : undefined;
-                        if (consequentColor || alternateColor) {
-                            const consequentStart = consequentSplit.length === 3 ? `"${consequentSplit[0]} ${consequentSplit[1]}"` : prop.consequent.raw;
-                            const alternateStart = alternateSplit.length === 3 ? `"${alternateSplit[0]} ${alternateSplit[1]}"` : prop.alternate.raw;
-                            console.log(prop);
-                            context.report({
-                                node,
-                                message: "Border-color has shorthand",
-                                loc: prop.loc,
-                                fix(fixer) {
-                                    return [fixer.replaceText(prop.consequent, consequentStart), fixer.replaceText(prop.alternate, alternateStart), fixer.insertTextAfter(prop, `, borderColor:${prop.test.raw ?? prop.test.name}?"${consequentColor ?? prop.consequent.value}":"${alternateColor ?? prop.alternate.value}"`)];
-                                },
-                            });
-                        }
-                    }
-                }
-                else {
-                    const consquentSplit = propValue.split(" ");
-                    // We can use the color shorthands by splitting border into border (without color) and borderColor
-                    if (consquentSplit.length === 3) {
-                        const color = colorAliases.get(consquentSplit[2].toLowerCase());
-                        if (color) {
-                            switch (prop.parent.type) {
-                                case "ConditionalExpression":
-                                    // Handle case where we found border Inside a conditional. We need to add border color as a duplicate after the conditional
-                                    // console.log(prop.parent);
-                                    if (prop.parent.parent.type === "JSXExpressionContainer") {
-                                        context.report({
-                                            node,
-                                            message: "Border-color has shorthand",
-                                            loc: prop.loc,
-                                            fix(fixer) {
-                                                return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${(conditional2Str(prop.parent.test))}?"${color}":${prop.parent.alternate.raw}}`)];
-                                            },
-                                        });
-                                    }
-                                    break;
-                                default:
+                const propValue = prop.value
+                const consquentSplit = propValue.split(" ");
+                // We can use the color shorthands by splitting border into border (without color) and borderColor
+                if (consquentSplit.length === 3) {
+                    const color = colorAliases.get(consquentSplit[2].toLowerCase());
+                    if (color) {
+                        switch (prop.parent.type) {
+                            case "ConditionalExpression":
+                                // Handle case where we found border Inside a conditional. We need to add border color as a duplicate after the conditional
+                                if (prop.parent.parent.type === "JSXExpressionContainer") {
                                     context.report({
                                         node,
                                         message: "Border-color has shorthand",
                                         loc: prop.loc,
                                         fix(fixer) {
-                                            return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                                            return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${(conditional2Str(prop.parent.test))}?"${color}":${prop.parent.alternate.raw}}`)];
                                         },
                                     });
-                            }
+                                }
+                                break;
+                            default:
+                                context.report({
+                                    node,
+                                    message: "Border-color has shorthand",
+                                    loc: prop.loc,
+                                    fix(fixer) {
+                                        return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                                    },
+                                });
                         }
                     }
                 }
-
             }
+
             if (propName === "borderRadius") {
                 const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
@@ -213,25 +194,43 @@ module.exports = {
             }
         }
 
-        function handleObjectProperty(node, prop) {
-            if (prop.value.type === "ObjectExpression") {
-                for (const _prop of prop.value.properties) {
-                    handleObjectProperty(node, _prop);
+        function parseBorderShorthand(node, attr, propValue, isJSXExpression) {
+            if (propValue.type === "ConditionalExpression") {
+
+                const consequentSplit = propValue.consequent.value.split(" ");
+                const alternateSplit = propValue.alternate.value.split(" ");
+
+                // We can use the color shorthands by splitting border into border (without color) and borderColor
+                if (consequentSplit.length === 3 || alternateSplit.length == 3) {
+                    const consequentColor = consequentSplit.length === 3 ? colorAliases.get(consequentSplit[2].toLowerCase()) : undefined;
+                    const alternateColor = alternateSplit.length === 3 ? colorAliases.get(alternateSplit[2].toLowerCase()) : undefined;
+                    if (consequentColor || alternateColor) {
+                        const consequentStart = consequentSplit.length === 3 ? `"${consequentSplit[0]} ${consequentSplit[1]}"` : propValue.consequent.raw;
+                        const alternateStart = alternateSplit.length === 3 ? `"${alternateSplit[0]} ${alternateSplit[1]}"` : propValue.alternate.raw;
+                        if (isJSXExpression) {
+                            context.report({
+                                node,
+                                message: "Border-color has shorthand",
+                                loc: propValue.loc,
+                                fix(fixer) {
+                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} borderColor={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? propValue.alternate.value}"`)];
+                                },
+                            });
+                        }
+                        else {
+                            context.report({
+                                node,
+                                message: "Border-color has shorthand",
+                                loc: propValue.loc,
+                                fix(fixer) {
+                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `, borderColor:${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? propValue.alternate.value}"`)];
+                                },
+                            });
+                        }
+                        return true;
+                    }
                 }
             }
-
-            let propName = prop.key.name || prop.key.value;
-
-            if (breakpoints.has(propName)) {
-                // TODO: need a more sane way of grabbing the parent prop. Maybe recurse up parent, but check the type
-                if (prop.parent.parent.type === "Property") {
-                    propName = prop.parent.parent.key.name;
-                }
-                else {
-                    propName = prop.parent.parent.parent.name.name;
-                }
-            }
-            checkAliasProps(node, prop.value, propName);
         }
 
         function checkForAlias(node, attribute, { message, values2Alias }, value) {
