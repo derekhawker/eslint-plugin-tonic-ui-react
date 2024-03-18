@@ -152,35 +152,21 @@ module.exports = {
             }
 
             if (propName === "border") {
-                const propValue = prop.value
-                const consquentSplit = propValue.split(" ");
-                // We can use the color shorthands by splitting border into border (without color) and borderColor
-                if (consquentSplit.length === 3) {
-                    const color = colorAliases.get(consquentSplit[2].toLowerCase());
-                    if (color) {
-                        switch (prop.parent.type) {
-                            case "ConditionalExpression":
-                                // Handle case where we found border Inside a conditional. We need to add border color as a duplicate after the conditional
-                                if (prop.parent.parent.type === "JSXExpressionContainer") {
-                                    context.report({
-                                        node,
-                                        message: "Border-color has shorthand",
-                                        loc: prop.loc,
-                                        fix(fixer) {
-                                            return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop.parent.parent, ` borderColor={${(conditional2Str(prop.parent.test))}?"${color}":${prop.parent.alternate.raw}}`)];
-                                        },
-                                    });
-                                }
-                                break;
-                            default:
-                                context.report({
-                                    node,
-                                    message: "Border-color has shorthand",
-                                    loc: prop.loc,
-                                    fix(fixer) {
-                                        return [fixer.replaceText(prop, `"${consquentSplit[0]} ${consquentSplit[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
-                                    },
-                                });
+                if (!parseBorderShorthand(node, prop, prop.parent, true)) {
+                    const propValues = prop.value.split(" ");
+
+                    // We can use the color shorthands by splitting border into border (without color) and borderColor
+                    if (propValues.length === 3) {
+                        const color = colorAliases.get(propValues[2].toLowerCase());
+                        if (color) {
+                            context.report({
+                                node,
+                                message: "Border-color has shorthand",
+                                loc: prop.loc,
+                                fix(fixer) {
+                                    return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                                },
+                            });
                         }
                     }
                 }
@@ -213,7 +199,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: propValue.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} borderColor={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? propValue.alternate.value}"`)];
+                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} borderColor={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
                                 },
                             });
                         }
@@ -223,7 +209,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: propValue.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `, borderColor:${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? propValue.alternate.value}"`)];
+                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `, borderColor:${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
                                 },
                             });
                         }
