@@ -78,7 +78,7 @@ ruleTester.run("enforce-shorthands", // rule name
         }, {
             code: "<Box border={true?\"0 solid #5e5e5e\":\"none\"}  />",
             output: "<Box border={true?\"0 solid\":\"none\"} borderColor={true?\"gray:60\":\"\"}  />",
-            errors: 2, // TODO: I have two code paths calling context.report on this. Need to investigate
+            errors: 1,
         }, {
             code: "<Box {...{border:true?\"0 solid #5e5e5e\":\"\"}}  />",
             output: "<Box {...{border:true?\"0 solid\":\"\", borderColor:true?\"gray:60\":\"\"}}  />",

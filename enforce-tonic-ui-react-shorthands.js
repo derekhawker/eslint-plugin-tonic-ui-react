@@ -57,7 +57,7 @@ module.exports = {
             switch (attrValue.type) {
                 case "JSXExpressionContainer": {
                     const exprContainer = attrValue.expression;
-                    if (propName === "border" && exprContainer.type === "Conditional") {
+                    if (propName === "border" && exprContainer.type === "ConditionalExpression") {
                         if (parseBorderShorthand(node, attr, exprContainer, true)) break;
                     }
                     else {
@@ -71,7 +71,6 @@ module.exports = {
                     }
                     break;
                 case "Property":
-
                     const pName = (breakpoints.has(attrValue.key.name)) ? propName : attrValue.key.name;
                     if (pName === "border") {
                         if (parseBorderShorthand(node, attr, attrValue.value)) break;
