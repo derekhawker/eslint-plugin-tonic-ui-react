@@ -22,9 +22,9 @@ const zIndexValues = new Map([[-1, "hide"], ["auto", "auto"], [0, "base"], [1000
 
 const breakpoints = new Set(["sm", "md", "lg", "xl", "2xl"]);
 
-const radiiValues = new Map([[3, "sm"], [6, "md"], [12, "lg"],
+const radiiValues = new Map([[3, "sm"], [6, "md"], [12, "lg"]]);
 
-]);
+const borderProps = new Set(["border", "borderTop", "borderLeft", "borderBottom", "borderRight"]);
 
 module.exports = {
     lineHeightValues,
@@ -39,4 +39,5 @@ module.exports = {
     zIndexValues,
     breakpoints,
     radiiValues,
+    borderProps,
 };

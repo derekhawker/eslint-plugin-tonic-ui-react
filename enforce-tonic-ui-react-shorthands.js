@@ -13,6 +13,7 @@ const {
     zIndexValues,
     breakpoints,
     radiiValues,
+    borderProps,
 } = require("./alias-maps");
 const getLiteralPropValue = require("jsx-ast-utils/getLiteralPropValue");
 const elementType = require("jsx-ast-utils/elementType");
@@ -57,8 +58,8 @@ module.exports = {
             switch (attrValue.type) {
                 case "JSXExpressionContainer": {
                     const exprContainer = attrValue.expression;
-                    if (propName === "border" && exprContainer.type === "ConditionalExpression") {
-                        if (parseBorderShorthand(node, attr, exprContainer, true)) break;
+                    if (borderProps.has(propName) && exprContainer.type === "ConditionalExpression") {
+                        if (parseBorderShorthand(node, attr, propName, exprContainer, true)) break;
                     }
                     else {
                         parseValue(node, attr, exprContainer, propName);
@@ -72,8 +73,8 @@ module.exports = {
                     break;
                 case "Property":
                     const pName = (breakpoints.has(attrValue.key.name)) ? propName : attrValue.key.name;
-                    if (pName === "border") {
-                        if (parseBorderShorthand(node, attr, attrValue.value)) break;
+                    if (borderProps.has(pName)) {
+                        if (parseBorderShorthand(node, attr, propName, attrValue.value)) break;
                     }
                     parseValue(node, attr, attrValue.value, pName);
 
@@ -150,8 +151,8 @@ module.exports = {
                 }, propValue);
             }
 
-            if (propName === "border") {
-                if (!parseBorderShorthand(node, prop, prop.parent, true)) {
+            if (borderProps.has(propName)) {
+                if (!parseBorderShorthand(node, prop, propName, prop.parent, true)) {
                     const propValues = prop.value.split(" ");
 
                     // We can use the color shorthands by splitting border into border (without color) and borderColor
@@ -163,7 +164,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: prop.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, ` borderColor="${color}"`)];
+                                    return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, ` ${propName}Color="${color}"`)];
                                 },
                             });
                         }
@@ -179,7 +180,7 @@ module.exports = {
             }
         }
 
-        function parseBorderShorthand(node, attr, propValue, isJSXExpression) {
+        function parseBorderShorthand(node, attr, propName, propValue, isJSXExpression) {
             if (propValue.type === "ConditionalExpression") {
 
                 const consequentSplit = propValue.consequent.value.split(" ");
@@ -198,7 +199,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: propValue.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} borderColor={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
+                                    return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} ${propName}Color={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
                                 },
                             });
                         }
