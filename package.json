@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node enforce-tonic-ui-react-shorthands.test.js"
+    "test": "node enforce-shorthands.test.js"
   },
   "keywords": [
     "eslint",

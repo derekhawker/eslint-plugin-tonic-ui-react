@@ -1,5 +1,5 @@
 const { RuleTester } = require("eslint");
-const tonicUIReactShorthandsRule = require("./enforce-tonic-ui-react-shorthands");
+const tonicUIReactShorthandsRule = require("./enforce-shorthands");
 
 const parserOptions = {
     ecmaVersion: 2018, sourceType: "module", ecmaFeatures: {
