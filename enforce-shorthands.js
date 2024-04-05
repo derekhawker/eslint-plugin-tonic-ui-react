@@ -153,7 +153,7 @@ module.exports = {
 
             if (borderProps.has(propName)) {
                 if (!parseBorderShorthand(node, prop, propName, prop.parent, true)) {
-                    const propValues = prop.value.split(" ");
+                    const propValues = typeof prop.value === "string" ? prop.value.split(" ") : [];
 
                     // We can use the color shorthands by splitting border into border (without color) and borderColor
                     if (propValues.length === 3) {
@@ -183,8 +183,8 @@ module.exports = {
         function parseBorderShorthand(node, attr, propName, propValue, isJSXExpression) {
             if (propValue.type === "ConditionalExpression") {
 
-                const consequentSplit = propValue.consequent.value.split(" ");
-                const alternateSplit = propValue.alternate.value.split(" ");
+                const consequentSplit = typeof propValue.consequent.value === "string" ? propValue.consequent.value.split(" ") : [];
+                const alternateSplit = typeof propValue.alternate.value === "string" ? propValue.alternate.value.split(" ") : [];
 
                 // We can use the color shorthands by splitting border into border (without color) and borderColor
                 if (consequentSplit.length === 3 || alternateSplit.length == 3) {

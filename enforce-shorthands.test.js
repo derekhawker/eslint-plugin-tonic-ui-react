@@ -20,6 +20,8 @@ ruleTester.run("enforce-shorthands", // rule name
             code: "<div padding=\"24px\" p=\"4px\" borderColor=\"#005242\" fontSize=\"28px\" fontSize={28} />",
         }, {
             code: "<div style={{ padding:\"4px\", borderColor:\"#005242\", fontSize:\"28px\"}} />",
+        }, {
+            code: "<div border={1} border={{xs:1}} {...{border:1}} />",
         }]), // 'invalid' checks cases that should not pass
         invalid: ([{
             code: "<Box padding=\"4px\" p=\"16rem\" p={12} sx={{p:8}}/>",

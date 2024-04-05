@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-tonic-ui-react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -18,9 +18,9 @@
     "eslint-plugin-react": "^7.34.0"
   },
   "dependencies": {
-    "jsx-ast-utils": "^3.3.5"
+    "jsx-ast-utils": "^3.0.0"
   },
   "peerDependencies": {
-    "eslint": ">=8.0.0"
+    "eslint": ">=7.0.0"
   }
 }
