@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-tonic-ui-react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,9 +9,13 @@
   "keywords": [
     "eslint",
     "eslintplugin",
-    "eslint-plugin"
+    "eslint-plugin",
+    "tonic-ui",
+    "@tonic-ui"
   ],
-  "author": "",
+  "author": "Derek Hawker",
+  "repository": "https://github.com/derekhawker/eslint-plugin-tonic-ui-react",
+  "homepage": "https://github.com/derekhawker/eslint-plugin-tonic-ui-react",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^8.57.0",

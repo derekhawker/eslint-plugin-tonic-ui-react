@@ -29,6 +29,12 @@ function conditional2Str(test) {
     }
 }
 
+function writeExtraProperty(key, value, isObjectProperty) {
+    // Two ways to reach this. A object property needs to be added. Or a JSX property is being added.
+    // Need a comma for object properties
+    return isObjectProperty ? `, ${key}:"${value}"` : ` ${key}="${value}"`;
+}
+
 module.exports = {
     meta: {
         type: "suggestion", docs: {
@@ -83,10 +89,16 @@ module.exports = {
                     checkAliasProps(node, attrValue, propName);
                     break;
                 }
-                case "ConditionalExpression":
+                case "LogicalExpression": {
+                    parseValue(node, attr, attrValue.left, propName);
+                    parseValue(node, attr, attrValue.right, propName);
+                    break;
+                }
+                case "ConditionalExpression": {
                     parseValue(node, attr, attrValue.consequent, propName);
                     parseValue(node, attr, attrValue.alternate, propName);
                     break;
+                }
             }
         }
 
@@ -164,7 +176,7 @@ module.exports = {
                                 message: "Border-color has shorthand",
                                 loc: prop.loc,
                                 fix(fixer) {
-                                    return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, ` ${propName}Color="${color}"`)];
+                                    return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, `${writeExtraProperty(`${propName}Color`, `${color}`, prop.parent?.type === "Property")}`)];
                                 },
                             });
                         }
