@@ -1,8 +1,23 @@
 
+To get started, install this plugin
+```bash
+npm add -D eslint-plugin-tonic-ui-react
+```
+
+and add to your eslintrc. A recommended config is provided. Individual rules are listed below.
+
+```text
+  extends: ['plugin:tonic-ui-react/recommended'],
+```
 
 ## Rules
-### tonic-ui-react/enforce-shorthands
-Several props like margin, border, color, have shorthand values to promote consistency when styling. This rule when run will update CSS props with those values. Supports --fix
+### Replace CSS px/rem/string values with Tonic-UI shorthand aliases
+
+```
+"tonic-ui-react/enforce-shorthands": "error"
+```
+
+Several props like margin, border, color, have shorthand values to promote consistency when styling. This rule when run will update those CSS props. Supports eslint auto-fix
 
 Example:
 

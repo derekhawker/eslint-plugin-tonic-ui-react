@@ -12,6 +12,7 @@ const {
     fontSizeValues,
     zIndexValues,
     breakpoints,
+    radiiProps,
     radiiValues,
     borderProps,
 } = require("./alias-maps");
@@ -51,16 +52,17 @@ module.exports = {
                 // }
                 const componentName = node.openingElement.name.type === "JSXIdentifier" ? node.openingElement.name.name : node.openingElement.name.type === "JSXMemberExpression" ? node.openingElement.name.object.name : "";
 
+                // Only apply to capitalized components. Not intrinsics.
+                // TODO: This rule gets applied to any components. Could be dangerous by also helps because we support transforms on wrapper components
                 if (componentName[0] === componentName[0].toUpperCase()) {
-
                     for (const attr of node.openingElement.attributes) {
-                        parseAttribute(attr, node);
+                        parseAttribute(componentName.toLowerCase(), attr, node);
                     }
                 }
             },
         };
 
-        function parseValue(node, attr, attrValue, propName) {
+        function parseValue(componentName, node, attr, attrValue, propName) {
             switch (attrValue.type) {
                 case "JSXExpressionContainer": {
                     const exprContainer = attrValue.expression;
@@ -68,13 +70,13 @@ module.exports = {
                         if (parseBorderShorthand(node, attr, propName, exprContainer, true)) break;
                     }
                     else {
-                        parseValue(node, attr, exprContainer, propName);
+                        parseValue(componentName, node, attr, exprContainer, propName);
                     }
                     break;
                 }
                 case "ObjectExpression":
                     for (const prop of attrValue.properties) {
-                        parseValue(node, attr, prop, propName);
+                        parseValue(componentName, node, attr, prop, propName);
                     }
                     break;
                 case "Property":
@@ -82,27 +84,27 @@ module.exports = {
                     if (borderProps.has(pName)) {
                         if (parseBorderShorthand(node, attr, propName, attrValue.value)) break;
                     }
-                    parseValue(node, attr, attrValue.value, pName);
+                    parseValue(componentName, node, attr, attrValue.value, pName);
 
                     break;
                 case "Literal": {
-                    checkAliasProps(node, attrValue, propName);
+                    checkAliasProps(componentName, node, attrValue, propName);
                     break;
                 }
                 case "LogicalExpression": {
-                    parseValue(node, attr, attrValue.left, propName);
-                    parseValue(node, attr, attrValue.right, propName);
+                    parseValue(componentName, node, attr, attrValue.left, propName);
+                    parseValue(componentName, node, attr, attrValue.right, propName);
                     break;
                 }
                 case "ConditionalExpression": {
-                    parseValue(node, attr, attrValue.consequent, propName);
-                    parseValue(node, attr, attrValue.alternate, propName);
+                    parseValue(componentName, node, attr, attrValue.consequent, propName);
+                    parseValue(componentName, node, attr, attrValue.alternate, propName);
                     break;
                 }
             }
         }
 
-        function parseAttribute(attr, node) {
+        function parseAttribute(componentName, attr, node) {
             switch (attr.type) {
                 case "JSXAttribute":
                     // simple boolean props are null (
@@ -110,26 +112,26 @@ module.exports = {
                         return;
                     }
 
-                    // Shorthands don't work in style. Skip
+                    // Shorthands don't work in style. Don't even try
                     if (attr.name.name === "style") return;
 
-                    parseValue(node, attr, attr.value, attr.name?.name);
+                    parseValue(componentName, node, attr, attr.value, attr.name?.name);
                     break;
 
                 case "JSXSpreadAttribute":
                     const argument = attr.argument;
-                    parseValue(node, attr, argument, argument.name?.name);
+                    parseValue(componentName, node, attr, argument, argument.name?.name);
 
                     break;
             }
 
         }
 
-        function checkAliasProps(node, prop, propName) {
+        function checkAliasProps(componentName, node, prop, propName) {
             if (spacingProps.has(propName)) {
                 const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
-                    message: "Spacing shorthand", values2Alias: spacingValues,
+                    message: `Spacing shorthand`, values2Alias: spacingValues,
                 }, propValue);
             }
             if (propName === "lineHeight") {
@@ -150,7 +152,7 @@ module.exports = {
                     message: "Color shorthand", values2Alias: colorAliases,
                 }, typeof propValue === "string" ? propValue.toLowerCase() : propValue);
             }
-            if (fontSizeProperties.has(propName)) {
+            if ((componentName === "text" && propName==="size") || fontSizeProperties.has(propName)) {
                 const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Font-size shorthand", values2Alias: fontSizeValues,
@@ -173,7 +175,7 @@ module.exports = {
                         if (color) {
                             context.report({
                                 node,
-                                message: "Border-color has shorthand",
+                                message: `Border-color has shorthand [${color}] `,
                                 loc: prop.loc,
                                 fix(fixer) {
                                     return [fixer.replaceText(prop, `"${propValues[0]} ${propValues[1]}"`), fixer.insertTextAfter(prop, `${writeExtraProperty(`${propName}Color`, `${color}`, prop.parent?.type === "Property")}`)];
@@ -184,7 +186,7 @@ module.exports = {
                 }
             }
 
-            if (propName === "borderRadius") {
+            if (radiiProps.has(propName)) {
                 const propValue = prop.value;
                 checkNumericOrPxOrRemValue(node, prop, {
                     message: "Border-radius shorthand", values2Alias: radiiValues,
@@ -208,7 +210,7 @@ module.exports = {
                         if (isJSXExpression) {
                             context.report({
                                 node,
-                                message: "Border-color has shorthand",
+                                message: `Border-color has shorthand [${consequentColor || alternateColor}] `,
                                 loc: propValue.loc,
                                 fix(fixer) {
                                     return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `} ${propName}Color={${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
@@ -218,7 +220,7 @@ module.exports = {
                         else {
                             context.report({
                                 node,
-                                message: "Border-color has shorthand",
+                                message: `Border-color has shorthand [${consequentColor || alternateColor}] `,
                                 loc: propValue.loc,
                                 fix(fixer) {
                                     return [fixer.replaceText(propValue.consequent, consequentStart), fixer.replaceText(propValue.alternate, alternateStart), fixer.insertTextAfter(propValue, `, borderColor:${conditional2Str(propValue.test)}?"${consequentColor ?? propValue.consequent.value}":"${alternateColor ?? ""}"`)];
@@ -234,7 +236,7 @@ module.exports = {
         function checkForAlias(node, attribute, { message, values2Alias }, value) {
             if (values2Alias.has(value)) {
                 context.report({
-                    node, message, loc: attribute.loc, fix(fixer) {
+                    node, message:`${message} has shorthand [${values2Alias.get(value)}] `, loc: attribute.loc, fix(fixer) {
                         return fixer.replaceText(attribute.parent?.type === "JSXExpressionContainer" ? attribute.parent : attribute, `"${values2Alias.get(value)}"`);
                     },
                 });

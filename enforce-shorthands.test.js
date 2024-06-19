@@ -21,12 +21,16 @@ ruleTester.run("enforce-shorthands", // rule name
         }, {
             code: "<div style={{ padding:\"4px\", borderColor:\"#005242\", fontSize:\"28px\"}} />",
         }, {
+            code: "<Flex size=\"28px\" />", // size prop only available on Text component
+        }, {
             code: "<div border={1} border={{xs:1}} {...{border:1}} />",
         }]), // 'invalid' checks cases that should not pass
         invalid: ([{
             code: "<Box padding=\"4px\" p=\"16rem\" p={12} sx={{p:8}}/>",
             output: "<Box padding=\"1x\" p=\"64x\" p=\"3x\" sx={{p:\"2x\"}}/>",
             errors: 4,
+        }, {
+            code: "<Box h=\"4px\" w={{md:8}}/>", output: "<Box h=\"1x\" w={{md:\"2x\"}}/>", errors: 2,
         }, {
             code: "<Box lineHeight=\"22px\" lineHeight=\"1.25rem\" lineHeight={22} {...{ lineHeight: 22 }} />",
             output: "<Box lineHeight=\"md\" lineHeight=\"sm\" lineHeight=\"md\" {...{ lineHeight: \"md\" }} />",
@@ -36,25 +40,25 @@ ruleTester.run("enforce-shorthands", // rule name
             output: "<Text fontWeight=\"extralight\" fontWeight=\"thin\"/>",
             errors: 2,
         }, {
-            code: "<Text borderColor=\"rgba(255, 255, 255, 1.0)\" background=\"#005242\" backgroundColor=\"#EeE1fe\"/>",
-            output: "<Text borderColor=\"white:emphasis\" background=\"teal:90\" backgroundColor=\"purple:10\"/>",
-            errors: 3,
+            code: "<Text borderColor=\"rgba(255, 255, 255, 1.0)\" background=\"#005242\" backgroundColor=\"#EeE1fe\" bg=\"#EeE1fe\"/>",
+            output: "<Text borderColor=\"white:emphasis\" background=\"teal:90\" backgroundColor=\"purple:10\" bg=\"purple:10\"/>",
+            errors: 4,
         }, {
             code: "<Flex fontSize=\"28px\" font=\"1.25rem\" fontSize={28} />",
             output: "<Flex fontSize=\"3xl\" font=\"xl\" fontSize=\"3xl\" />",
             errors: 3,
         }, {
+            code: "<Text size=\"28px\" />", output: "<Text size=\"3xl\" />", errors: 1,
+        }, {
             code: "<Stack zIndex=\"1700\" zIndex={1000}  />",
             output: "<Stack zIndex=\"toast\" zIndex=\"dropdown\"  />",
             errors: 2,
         }, {
-            code: "<CustomComponent borderRadius=\".75rem\" borderRadius=\".1875rem\" />",
-            output: "<CustomComponent borderRadius=\"lg\" borderRadius=\"sm\" />",
-            errors: 2,
+            code: "<CustomComponent borderRadius=\".75rem\" borderRadius=\".1875rem\" borderTopLeftRadius=\".75rem\" borderTopRightRadius=\".75rem\" borderBottomLeftRadius=\".75rem\" borderBottomRightRadius=\".75rem\" borderEndEndRadius=\".75rem\" borderEndStartRadius=\".75rem\" borderStartEndRadius=\".75rem\" borderStartStartRadius=\".75rem\" />",
+            output: "<CustomComponent borderRadius=\"lg\" borderRadius=\"sm\" borderTopLeftRadius=\"lg\" borderTopRightRadius=\"lg\" borderBottomLeftRadius=\"lg\" borderBottomRightRadius=\"lg\" borderEndEndRadius=\"lg\" borderEndStartRadius=\"lg\" borderStartEndRadius=\"lg\" borderStartStartRadius=\"lg\" />",
+            errors: 10,
         }, {
-            code: "<Box font={true?\"28px\":\"24px\"} />",
-            output: "<Box font={true?\"3xl\":\"2xl\"} />",
-            errors: 2,
+            code: "<Box font={true?\"28px\":\"24px\"} />", output: "<Box font={true?\"3xl\":\"2xl\"} />", errors: 2,
         }, {
             code: "<Box font={true && foo?\"28px\":\"24px\"} />",
             output: "<Box font={true && foo?\"3xl\":\"2xl\"} />",
