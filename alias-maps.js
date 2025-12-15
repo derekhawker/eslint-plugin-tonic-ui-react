@@ -30,6 +30,8 @@ const radiiValues = new Map([[3, "sm"], [6, "md"], [12, "lg"]]);
 
 const borderProps = new Set(["border", "borderTop", "borderLeft", "borderBottom", "borderRight"]);
 
+const responsiveProps = new Set(["sm", "md", "lg", "xl", "2xl"]);
+
 module.exports = {
     lineHeightValues,
     spacingValues,
@@ -45,4 +47,5 @@ module.exports = {
     radiiProps,
     radiiValues,
     borderProps,
+    responsiveProps,
 };

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node enforce-shorthands.test.js"
+    "test:enforce-shorthands": "node enforce-shorthands.test.js",
+    "test:enforce-color-mode": "node enforce-color-mode.test.js"
+
   },
   "keywords": [
     "eslint",

@@ -104,4 +104,18 @@ ruleTester.run("enforce-shorthands", // rule name
         }]),
     });
 
+
+// Unfixable
+ruleTester.run("enforce-shorthands", // rule name
+    tonicUIReactShorthandsRule, // rule code
+    {
+        valid:[],
+        invalid: [{
+            code: "<Box border={{sm:true?\"0 solid #5e5e5e\":\"none\", lg:\"none\"}}  />",
+            output: "<Box border={{sm:true?\"0 solid #5e5e5e\":\"none\", lg:\"none\"}}  />",
+            // Need to make a new JSX attribute. But no easy way to add new borderColor property
+            // output: "<Box border={{sm:true?"0 solid":"none", lg: \"none\"}} borderColor={{sm:true?"gray:60":""}}  />",
+            errors: 1,
+        }],
+    });
 console.log("All tests passed!");
