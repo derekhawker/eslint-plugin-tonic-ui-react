@@ -58,6 +58,26 @@ function MyComponent() {
 return <Box backgroundColor={colorStyle.background.tertiary} color={colorStyle.color.emphasis} />;
 }`,
                 errors: 1,
+            },
+            {
+                code: `function MyComponent() {
+  return <Box background="custom:primary" />;
+}`,
+                options: [{
+                  colorStyles: {
+                    light: { background: { customPrimary: 'custom:primary' } },
+                    dark: { background: { customPrimary: 'custom:primary' } }
+                  }
+                }],
+                output: `import { useColorMode, useColorStyle } from '@tonic-one/react';
+
+function MyComponent() {
+  const [colorMode] = useColorMode();
+  const [colorStyle] = useColorStyle();
+
+return <Box background={colorStyle.background.customPrimary} />;
+}`,
+                errors: 1,
             }]),
     });
 

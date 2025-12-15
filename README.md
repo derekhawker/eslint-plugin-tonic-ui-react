@@ -11,6 +11,61 @@ and add to your eslintrc. A recommended config is provided. Individual rules are
 ```
 
 ## Rules
+### Enforce use of colorStyle hooks instead of hardcoded color values
+
+```
+"tonic-ui-react/enforce-color-mode": "error"
+```
+
+This rule enforces the use of `useColorStyle` and `useColorMode` hooks from `@tonic-one/react` instead of hardcoded color values. It automatically adds the necessary imports and hook calls, and replaces hardcoded colors with references to the colorStyle object.
+
+#### Options
+
+- `importSource` (string): The import source for the hooks. Defaults to `'@tonic-one/react'`.
+- `colorStyles` (object): Custom color styles to supplement the base pattern. Should have `light` and `dark` properties, each containing nested objects of color values.
+
+Example:
+
+```jsx
+// Before
+function MyComponent() {
+  return <Box background="gray:100" color="white:emphasis" />;
+}
+
+// After
+import { useColorMode, useColorStyle } from '@tonic-one/react';
+
+function MyComponent() {
+  const [colorMode] = useColorMode();
+  const [colorStyle] = useColorStyle();
+
+  return <Box background={colorStyle.background.primary} color={colorStyle.color.emphasis} />;
+}
+```
+
+With custom colorStyles:
+
+```json
+{
+  "rules": {
+    "tonic-ui-react/enforce-color-mode": ["error", {
+      "colorStyles": {
+        "light": {
+          "background": {
+            "customPrimary": "custom:primary"
+          }
+        },
+        "dark": {
+          "background": {
+            "customPrimary": "custom:primary"
+          }
+        }
+      }
+    }]
+  }
+}
+```
+
 ### Replace CSS px/rem/string values with Tonic-UI shorthand aliases
 
 ```

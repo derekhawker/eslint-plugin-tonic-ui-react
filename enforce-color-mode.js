@@ -73,23 +73,16 @@ const colorStyle = {
   },
 };
 
-function buildColorMap() {
-  const map = new Map();
-  function add(obj, path = '') {
-    for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'string') {
-        map.set(value, path + key);
-      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        add(value, path + key + '.');
-      }
+function deepMerge(target, source) {
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      target[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      target[key] = source[key];
     }
   }
-  add(colorStyle.light);
-  add(colorStyle.dark);
-  return map;
+  return target;
 }
-
-const colorValueToPath = buildColorMap();
 
 module.exports = {
   meta: {
@@ -101,13 +94,34 @@ module.exports = {
     schema: [{
       type: 'object',
       properties: {
-        importSource: { type: 'string' }
+        importSource: { type: 'string' },
+        colorStyles: { type: 'object' }
       },
       additionalProperties: false
     }],
   },
   create(context) {
     const options = Object.assign({}, defaultOptions, context.options[0]);
+    const mergedColorStyle = deepMerge(Object.assign({}, colorStyle), options.colorStyles || {});
+
+    function buildColorMap() {
+      const map = new Map();
+      function add(obj, path = '') {
+        for (const [key, value] of Object.entries(obj)) {
+          if (typeof value === 'string') {
+            map.set(value, path + key);
+          } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            add(value, path + key + '.');
+          }
+        }
+      }
+      add(mergedColorStyle.light);
+      add(mergedColorStyle.dark);
+      return map;
+    }
+
+    const colorValueToPath = buildColorMap();
+
     let hasImport = false;
     let hasHook = false;
     let lastImport = null;
