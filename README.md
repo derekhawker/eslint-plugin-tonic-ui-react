@@ -1,5 +1,5 @@
-
 To get started, install this plugin
+
 ```bash
 npm add -D eslint-plugin-tonic-ui-react
 ```
@@ -11,17 +11,18 @@ and add to your eslintrc. A recommended config is provided. Individual rules are
 ```
 
 ## Rules
+
 ### Enforce use of colorStyle hooks instead of hardcoded color values
 
 ```
 "tonic-ui-react/enforce-color-mode": "error"
 ```
 
-This rule enforces the use of `useColorStyle` and `useColorMode` hooks from `@tonic-one/react` instead of hardcoded color values. It automatically adds the necessary imports and hook calls, and replaces hardcoded colors with references to the colorStyle object.
+This rule enforces the use of `useColorStyle` and `useColorMode` hooks from `@tonic-ui` instead of hardcoded color values. It automatically adds the necessary imports and hook calls, and replaces hardcoded colors with references to the colorStyle object.
 
 #### Options
 
-- `importSource` (string): The import source for the hooks. Defaults to `'@tonic-one/react'`.
+- `importSource` (string): The import source for the hooks. Defaults to `'@tonic-ui'`.
 - `colorStyles` (object): Custom color styles to supplement the base pattern. Should have `light` and `dark` properties, each containing nested objects of color values.
 
 Example:
@@ -33,13 +34,18 @@ function MyComponent() {
 }
 
 // After
-import { useColorMode, useColorStyle } from '@tonic-one/react';
+import { useColorMode, useColorStyle } from "@tonic-ui";
 
 function MyComponent() {
   const [colorMode] = useColorMode();
   const [colorStyle] = useColorStyle();
 
-  return <Box background={colorStyle.background.primary} color={colorStyle.color.emphasis} />;
+  return (
+    <Box
+      background={colorStyle.background.primary}
+      color={colorStyle.color.emphasis}
+    />
+  );
 }
 ```
 
@@ -48,20 +54,38 @@ With custom colorStyles:
 ```json
 {
   "rules": {
-    "tonic-ui-react/enforce-color-mode": ["error", {
-      "colorStyles": {
-        "light": {
-          "background": {
-            "customPrimary": "custom:primary"
-          }
-        },
-        "dark": {
-          "background": {
-            "customPrimary": "custom:primary"
+    "tonic-ui-react/enforce-color-mode": [
+      "error",
+      {
+        "colorStyles": {
+          "light": {
+            "background": {
+              "customPrimary": "custom:primary"
+            }
+          },
+          "dark": {
+            "background": {
+              "customPrimary": "custom:primary"
+            }
           }
         }
       }
-    }]
+    ]
+  }
+}
+```
+
+With custom importSource:
+
+```json
+{
+  "rules": {
+    "tonic-ui-react/enforce-color-mode": [
+      "error",
+      {
+        "importSource": "@tonic-one"
+      }
+    ]
   }
 }
 ```
@@ -89,6 +113,5 @@ to
 ```
 
 ## Useful links for developing
+
 To find out the name and structure of AST used by ESLint https://astexplorer.net/
-
-

@@ -6,7 +6,6 @@
   "scripts": {
     "test:enforce-shorthands": "node enforce-shorthands.test.js",
     "test:enforce-color-mode": "node enforce-color-mode.test.js"
-
   },
   "keywords": [
     "eslint",
@@ -20,11 +19,13 @@
   "homepage": "https://github.com/derekhawker/eslint-plugin-tonic-ui-react",
   "license": "ISC",
   "devDependencies": {
+    "dedent": "^1.7.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.0"
   },
   "dependencies": {
-    "jsx-ast-utils": "^3.0.0"
+    "jsx-ast-utils": "^3.0.0",
+    "prettier": "^3.7.4"
   },
   "peerDependencies": {
     "eslint": ">=7.0.0"

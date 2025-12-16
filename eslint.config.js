@@ -25,6 +25,8 @@ module.exports = [
         },
         rules: {
             "tonic-ui-react/enforce-shorthands": "error",
+            "tonic-ui-react/enforce-color-mode": "error",
+
         },
     },
 ];
